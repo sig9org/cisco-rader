@@ -1,0 +1,27 @@
+package diff
+
+import (
+	"reflect"
+	"testing"
+
+	"github.com/sig9org/cisco-rader/internal/model"
+)
+
+func TestComputeFirstRun(t *testing.T) {
+	got := Compute(model.Site{}, nil, model.Snapshot{Suggested: []string{"1.0"}})
+	if !got.FirstRun || got.Changed() {
+		t.Fatalf("unexpected first-run diff: %#v", got)
+	}
+}
+
+func TestComputeAddedAndRemoved(t *testing.T) {
+	old := model.Snapshot{Suggested: []string{"1.0"}, Latest: []string{"1.0", "0.9"}}
+	current := model.Snapshot{Suggested: []string{"1.1"}, Latest: []string{"1.1", "1.0"}}
+	got := Compute(model.Site{}, &old, current)
+	if !reflect.DeepEqual(got.Suggested.Added, []string{"1.1"}) ||
+		!reflect.DeepEqual(got.Suggested.Removed, []string{"1.0"}) ||
+		!reflect.DeepEqual(got.Latest.Added, []string{"1.1"}) ||
+		!reflect.DeepEqual(got.Latest.Removed, []string{"0.9"}) {
+		t.Fatalf("unexpected diff: %#v", got)
+	}
+}

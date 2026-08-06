@@ -1,0 +1,87 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: '3'
+
+dotenv: ['project.ini']
+
+silent: true
+
+includes:
+  _cleanup: https://raw.githubusercontent.com/sig9org/tasks/main/tasks/_cleanup.yml
+  _go: https://raw.githubusercontent.com/sig9org/tasks/main/tasks/_go.yml
+  _time: https://raw.githubusercontent.com/sig9org/tasks/main/tasks/_time.yml
+
+tasks:
+  default:
+    cmds:
+      - task --list
+
+  cleanup:
+    aliases: [c]
+    desc: "Cleanup unnecessary files"
+    cmds:
+      - defer:
+          task: _time:end
+          vars:
+            START_TIME: '{{.START_TIME}}'
+      - task: _cleanup:start
+
+  go-all-build:
+    aliases: [ga]
+    desc: "Cross-compile release binaries for all platforms"
+    cmds:
+      - defer:
+          task: _time:end
+          vars:
+            START_TIME: '{{.START_TIME}}'
+      - task: _go:all-build
+
+  go-build:
+    aliases: [gb]
+    desc: "Build a binary for the current platform"
+    cmds:
+      - defer:
+          task: _time:end
+          vars:
+            START_TIME: '{{.START_TIME}}'
+      - task: _go:build
+
+  go-clean:
+    aliases: [gc]
+    desc: "Delete the contents of the distribution directory"
+    cmds:
+      - defer:
+          task: _time:end
+          vars:
+            START_TIME: '{{.START_TIME}}'
+      - task: _go:clean
+
+  go-register:
+    aliases: [gr]
+    desc: "Register the latest tagged version on pkg.go.dev"
+    cmds:
+      - defer:
+          task: _time:end
+          vars:
+            START_TIME: '{{.START_TIME}}'
+      - task: _go:register
+
+  go-test:
+    aliases: [gt]
+    desc: "Run the Go test suite"
+    cmds:
+      - defer:
+          task: _time:end
+          vars:
+            START_TIME: '{{.START_TIME}}'
+      - task: _go:test
+
+  go-version:
+    aliases: [gv]
+    desc: "Show version information"
+    cmds:
+      - defer:
+          task: _time:end
+          vars:
+            START_TIME: '{{.START_TIME}}'
+      - task: _go:version

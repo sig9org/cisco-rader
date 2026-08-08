@@ -2,6 +2,7 @@ package logx
 
 import (
 	"bytes"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -12,11 +13,14 @@ func TestSeverityColors(t *testing.T) {
 	logger.Infof("normal")
 	logger.Warnf("warning")
 	logger.Errorf("error")
-	if out.String() != "normal\n" {
+	timestamped := regexp.MustCompile(`^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} (normal|warning|error)$`)
+	if !timestamped.MatchString(strings.TrimSpace(out.String())) {
 		t.Fatalf("normal output = %q", out.String())
 	}
-	if !strings.Contains(stderr.String(), orange+"warning"+reset) ||
-		!strings.Contains(stderr.String(), red+"error"+reset) {
+	plainStderr := strings.NewReplacer(orange, "", red, "", reset, "").Replace(stderr.String())
+	lines := strings.Split(strings.TrimSpace(plainStderr), "\n")
+	if len(lines) != 2 || !timestamped.MatchString(lines[0]) || !timestamped.MatchString(lines[1]) ||
+		!strings.Contains(stderr.String(), orange) || !strings.Contains(stderr.String(), red) {
 		t.Fatalf("severity output = %q", stderr.String())
 	}
 }

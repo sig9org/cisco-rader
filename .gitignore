@@ -1,5 +1,8 @@
 # Project-Specific
-
+sites.yml
+sites.yaml
+*_state.yml
+*_state.yaml
 
 # Ansible
 .ansible/
@@ -17,13 +20,9 @@
 
 # Configurations
 .env
+config.ini
 config.yml
 config.yaml
-config.ini
-sites.yml
-site.yaml
-*_state.yml
-*_state.yaml
 
 # Code coverage profiles and other test artifacts
 *.coverprofile
@@ -158,6 +157,13 @@ terraform.rc
 
 # macOS
 .DS_Store
+
+# Virtual Machine Images
+*.ova
+*.qcow2
+*.vdi
+*.vhdx
+*.vmdk
 
 # Windows
 *.cab

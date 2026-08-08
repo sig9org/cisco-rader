@@ -18,34 +18,71 @@ import (
 
 const releaseTreeSelector = ".p-tree-root-children"
 
-// Browser renders pages in a visible local Chrome or Chromium window.
-type Browser struct {
-	launcher *launcher.Launcher
-	browser  *rod.Browser
-	timeout  time.Duration
+// Options controls browser startup and page retrieval.
+type Options struct {
+	Timeout   time.Duration
+	Headless  bool
+	UserAgent string
+	Log       io.Writer
 }
 
-// Open starts a visible browser. Cisco may deny automated headless sessions,
-// so cisco-rader deliberately requires an active desktop session.
-func Open(ctx context.Context, timeout time.Duration, browserLog io.Writer) (*Browser, error) {
+// Browser renders pages in a local Chrome or Chromium process.
+type Browser struct {
+	launcher  *launcher.Launcher
+	browser   *rod.Browser
+	timeout   time.Duration
+	userAgent string
+}
+
+// Open starts a browser. Its user interface is displayed unless Headless is
+// enabled.
+func Open(ctx context.Context, opts Options) (*Browser, error) {
 	bin, ok := launcher.LookPath()
 	if !ok {
 		return nil, errors.New("Chrome or Chromium was not found; install a supported browser and try again")
 	}
-	l := launcher.New().Context(ctx).Bin(bin).Headless(false).Leakless(false)
-	if browserLog != nil {
-		l.Logger(browserLog)
+	l := launcher.New().Context(ctx).Bin(bin).Leakless(false)
+	if opts.Headless {
+		l.HeadlessNew(true)
+	} else {
+		l.Headless(false)
+	}
+	if opts.Log != nil {
+		l.Logger(opts.Log)
 	}
 	controlURL, err := l.Launch()
 	if err != nil {
-		return nil, fmt.Errorf("launch visible browser: %w", err)
+		return nil, fmt.Errorf("launch headless browser: %w", err)
 	}
 	b := rod.New().ControlURL(controlURL).Context(ctx).NoDefaultDevice()
 	if err := b.Connect(); err != nil {
 		l.Kill()
 		return nil, fmt.Errorf("connect to browser: %w", err)
 	}
-	return &Browser{launcher: l, browser: b, timeout: timeout}, nil
+	version, err := b.Version()
+	if err != nil {
+		_ = b.Close()
+		l.Kill()
+		l.Cleanup()
+		return nil, fmt.Errorf("read browser version: %w", err)
+	}
+	userAgent := browserUserAgent(opts.UserAgent, version.UserAgent)
+	return &Browser{launcher: l, browser: b, timeout: opts.Timeout, userAgent: userAgent}, nil
+}
+
+func browserUserAgent(configured, detected string) string {
+	if configured = strings.TrimSpace(configured); configured != "" {
+		return configured
+	}
+	return strings.ReplaceAll(detected, "HeadlessChrome", "Chrome")
+}
+
+// UserAgent returns the value applied to monitored pages.
+func (b *Browser) UserAgent() string {
+	if b == nil {
+		return ""
+	}
+	return b.userAgent
 }
 
 // Close stops the browser and removes its temporary profile.
@@ -69,6 +106,12 @@ func (b *Browser) Fetch(ctx context.Context, site model.Site) (model.Snapshot, e
 		return model.Snapshot{}, fmt.Errorf("create browser page: %w", err)
 	}
 	defer func() { _ = page.Close() }()
+	if err := page.SetUserAgent(&proto.NetworkSetUserAgentOverride{
+		UserAgent:      b.userAgent,
+		AcceptLanguage: "en-US,en;q=0.9",
+	}); err != nil {
+		return model.Snapshot{}, fmt.Errorf("set browser user agent: %w", err)
+	}
 
 	timed := page.Timeout(b.timeout)
 	if err := timed.Navigate(site.URL); err != nil {

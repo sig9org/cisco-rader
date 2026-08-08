@@ -15,7 +15,13 @@ import (
 
 // File is the sites configuration document.
 type File struct {
-	Sites []model.Site `yaml:"sites"`
+	Settings Settings     `yaml:"settings"`
+	Sites    []model.Site `yaml:"sites"`
+}
+
+// Settings controls notification behavior shared by all monitored sites.
+type Settings struct {
+	Mention string `yaml:"mention"`
 }
 
 // ResolveSitePath returns an explicitly requested path, or the first existing
@@ -54,6 +60,7 @@ func Load(path string) (File, error) {
 	if len(cfg.Sites) == 0 {
 		return File{}, errors.New("site file contains no sites")
 	}
+	cfg.Settings.Mention = strings.TrimSpace(cfg.Settings.Mention)
 	seen := make(map[string]struct{}, len(cfg.Sites))
 	for i := range cfg.Sites {
 		site := &cfg.Sites[i]

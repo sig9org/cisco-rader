@@ -29,17 +29,17 @@ func (l *Logger) Infof(format string, args ...any) {
 	if l.Silent && !l.Debug {
 		return
 	}
-	l.write(l.Out, "", format, args...)
+	l.write(l.Out, "", timestamp()+" "+format, args...)
 }
 
 // Warnf writes an orange warning message.
 func (l *Logger) Warnf(format string, args ...any) {
-	l.write(l.Err, orange, format, args...)
+	l.write(l.Err, orange, timestamp()+" "+format, args...)
 }
 
 // Errorf writes a red error message.
 func (l *Logger) Errorf(format string, args ...any) {
-	l.write(l.Err, red, format, args...)
+	l.write(l.Err, red, timestamp()+" "+format, args...)
 }
 
 // Debugf writes a timestamped gray message when debug mode is enabled.
@@ -47,8 +47,12 @@ func (l *Logger) Debugf(format string, args ...any) {
 	if !l.Debug {
 		return
 	}
-	prefix := time.Now().Format("2006-01-02 15:04:05") + " [DEBUG] "
+	prefix := timestamp() + " [DEBUG] "
 	l.write(l.Out, gray, prefix+format, args...)
+}
+
+func timestamp() string {
+	return time.Now().Format("2006-01-02 15:04:05")
 }
 
 func (l *Logger) write(w io.Writer, color, format string, args ...any) {

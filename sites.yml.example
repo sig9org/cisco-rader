@@ -1,4 +1,5 @@
-# Cisco Software Download pages to monitor.
+settings:
+  mention: "foobar@example.com"
 sites:
   - name: APIC (Application Policy Infrastructure Controller)
     url: https://software.cisco.com/download/home/285968390/type/286278832/release/

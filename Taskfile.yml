@@ -26,16 +26,6 @@ tasks:
             START_TIME: '{{.START_TIME}}'
       - task: _cleanup:start
 
-  go-all-build:
-    aliases: [ga]
-    desc: "Cross-compile release binaries for all platforms"
-    cmds:
-      - defer:
-          task: _time:end
-          vars:
-            START_TIME: '{{.START_TIME}}'
-      - task: _go:all-build
-
   go-build:
     aliases: [gb]
     desc: "Build a binary for the current platform"
@@ -45,6 +35,16 @@ tasks:
           vars:
             START_TIME: '{{.START_TIME}}'
       - task: _go:build
+
+  go-build-all:
+    aliases: [gba]
+    desc: "Cross-compile release binaries for all platforms"
+    cmds:
+      - defer:
+          task: _time:end
+          vars:
+            START_TIME: '{{.START_TIME}}'
+      - task: _go:build-all
 
   go-clean:
     aliases: [gc]

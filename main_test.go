@@ -14,10 +14,23 @@ func TestRunHelp(t *testing.T) {
 	if code := run(context.Background(), []string{"-help"}, &stdout, &stderr); code != 0 {
 		t.Fatalf("run = %d, stderr=%s", code, stderr.String())
 	}
-	for _, want := range []string{"usage: cisco-rader [flags]", "-p, -profile string", "-v, -version", "-h, -help"} {
+	for _, want := range []string{"usage: cisco-rader [flags]", "-profile string", "-separate", "-v, -version", "-h, -help"} {
 		if !strings.Contains(stdout.String(), want) {
 			t.Errorf("help does not contain %q", want)
 		}
+	}
+	if strings.Contains(stdout.String(), "-p,") {
+		t.Errorf("help still advertises removed -p option")
+	}
+}
+
+func TestRunRejectsRemovedShortProfileOption(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	if code := run(context.Background(), []string{"-p", "webex"}, &stdout, &stderr); code != 2 {
+		t.Fatalf("run = %d, want 2", code)
+	}
+	if !strings.Contains(stderr.String(), "flag provided but not defined: -p") {
+		t.Fatalf("unexpected stderr: %s", stderr.String())
 	}
 }
 
@@ -30,6 +43,10 @@ func TestRunHelpAlignsFlagDescriptions(t *testing.T) {
 		"site configuration file",
 		"chat configuration file",
 		"chat configuration profile",
+		"send each software update",
+		"run Chrome or Chromium",
+		"browser User-Agent",
+		"release information retrieval timeout",
 		"do not send chat notifications",
 		"do not write the derived",
 		"show the planned operation",
@@ -55,6 +72,16 @@ func TestRunHelpAlignsFlagDescriptions(t *testing.T) {
 	}
 }
 
+func TestRunRejectsNonPositiveTimeout(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	if code := run(context.Background(), []string{"-timeout", "0s"}, &stdout, &stderr); code != 2 {
+		t.Fatalf("run = %d, want 2", code)
+	}
+	if !strings.Contains(stderr.String(), "-timeout must be greater than zero") {
+		t.Fatalf("unexpected stderr: %s", stderr.String())
+	}
+}
+
 func TestRunDryRunDoesNotCreateState(t *testing.T) {
 	dir := t.TempDir()
 	sitePath := filepath.Join(dir, "custom.yml")
@@ -71,6 +98,38 @@ func TestRunDryRunDoesNotCreateState(t *testing.T) {
 	}
 	if !strings.Contains(stdout.String(), "would check 1 site(s)") {
 		t.Fatalf("unexpected stdout: %s", stdout.String())
+	}
+}
+
+func TestRunDryRunReportsBrowserOptions(t *testing.T) {
+	dir := t.TempDir()
+	sitePath := filepath.Join(dir, "custom.yml")
+	data := []byte("sites:\n  - name: Test\n    url: https://software.cisco.com/test\n")
+	if err := os.WriteFile(sitePath, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var stdout, stderr bytes.Buffer
+	args := []string{"-site", sitePath, "-dryrun", "-headless", "-user-agent", "Custom Agent", "-timeout", "1m30s"}
+	if code := run(context.Background(), args, &stdout, &stderr); code != 0 {
+		t.Fatalf("run = %d, stderr=%s", code, stderr.String())
+	}
+	want := "browser mode=headless, timeout=1m30s, custom User-Agent=true"
+	if !strings.Contains(stdout.String(), want) {
+		t.Fatalf("stdout does not contain %q: %s", want, stdout.String())
+	}
+}
+
+func TestChatToolDisplayName(t *testing.T) {
+	tests := map[string]string{
+		"teams":  "Microsoft Teams",
+		"webex":  "Cisco Webex",
+		"slack":  "Slack",
+		"custom": "custom",
+	}
+	for input, want := range tests {
+		if got := chatToolDisplayName(input); got != want {
+			t.Errorf("chatToolDisplayName(%q) = %q, want %q", input, got, want)
+		}
 	}
 }
 

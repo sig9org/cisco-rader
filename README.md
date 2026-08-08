@@ -15,10 +15,10 @@ versions in YAML and can notify Cisco Webex, Microsoft Teams, and Slack through
 ## Requirements
 
 - Go 1.26.5 or later when building from source
-- Chrome or Chromium and an active desktop session
+- Chrome or Chromium and, by default, an active desktop session
 
-The Cisco download site is rendered in a browser, so headless-only hosts are
-not currently supported.
+The Cisco download site is rendered in a browser. The browser window is shown
+by default; use `-headless` to run without displaying its UI.
 
 ## Installation
 
@@ -38,6 +38,15 @@ used instead.
 sites:
   - name: Cisco Catalyst 9800 Wireless Controller
     url: https://software.cisco.com/download/home/285968390/type/286278832/release/
+```
+
+An optional `settings.mention` value adds a chat mention to release-change
+notifications. It accepts the identifier format supported by chatxgo, such as
+an email address for Microsoft Teams or Cisco Webex:
+
+```yaml
+settings:
+  mention: user@example.com
 ```
 
 Use `-site` to choose another file. The state file is derived from its name:
@@ -63,9 +72,9 @@ WEBEX_TOKEN=your-token
 WEBEX_DST=your-room-id
 ```
 
-The `default` profile is selected automatically. Use `-p webex` or
-`-profile webex` to choose another section, and `-config` to choose another INI
-file. Without `-config`, lookup follows chatxgo: `./config.ini` first, then
+The `default` profile is selected automatically. Use `-profile webex` to choose
+another section, and `-config` to choose another INI file. Without `-config`,
+lookup follows chatxgo: `./config.ini` first, then
 `~/.config/chatxgo/config.ini` on Linux/macOS or the per-user roaming config
 directory on Windows. If neither file exists, chatxgo environment variables
 are used for the default profile.
@@ -78,17 +87,21 @@ Keep `config.ini` private because it can contain credentials. The repository's
 ```text
 cisco-rader [flags]
 
-      -site string     site configuration file (default: sites.yml, then site.yaml)
-      -config string   chat configuration file (default: config.ini lookup)
-  -p, -profile string  chat configuration profile (default: "default")
-      -no-notify       do not send chat notifications when releases change
-      -no-save         do not write the derived *_state YAML file
-      -dryrun          show the planned operation without fetching, notifying, or saving
-      -silent          suppress normal stdout messages
-      -debug           print timestamped debug tracing to stdout (overrides -silent)
-      -update          update cisco-rader to the latest release and exit
-  -v, -version         print version information and exit
-  -h, -help            show the help message and exit
+      -site string        site configuration file (default: sites.yml, then site.yaml)
+      -config string      chat configuration file (default: config.ini lookup)
+      -profile string     chat configuration profile (default: "default")
+      -separate           send each software update as a separate message
+      -headless           run Chrome or Chromium without displaying its UI
+      -user-agent string  browser User-Agent (default: detected Chrome User-Agent)
+      -timeout duration   release information retrieval timeout (default: 45s)
+      -no-notify          do not send chat notifications when releases change
+      -no-save            do not write the derived *_state YAML file
+      -dryrun             show the planned operation without fetching, notifying, or saving
+      -silent             suppress normal stdout messages
+      -debug              print timestamped debug tracing to stdout (overrides -silent)
+      -update             update cisco-rader to the latest release and exit
+  -v, -version            print version information and exit
+  -h, -help               show the help message and exit
 ```
 
 The first successful check establishes the initial state without notifying.
@@ -96,12 +109,16 @@ Later release changes trigger notifications unless `-no-notify` is set.
 `-no-save` prevents state changes from being written. `-dryrun` performs no
 browser access, notification, or state write.
 
-Each changed software page is sent as a separate chat message. Its subject is
-the send time followed by the software name, for example:
-`[2026-08-06 08:42 JST]APIC (Application Policy Infrastructure Controller)`.
+By default, all changed software pages are grouped into one chat message. The
+subject includes the number of updated pages, such as
+`Cisco Software Update (2 updates)`. Software names are shown as normal-sized
+bold text in the body. With `-separate`, each changed page is sent as a
+separate message whose subject is only the corresponding `name` from
+`sites.yml`.
 
-Normal output is uncolored. Warnings are orange, errors are red, and
-timestamped debug messages are gray. `-debug` overrides `-silent`.
+All runtime log messages include a timestamp. Normal output is uncolored,
+warnings are orange, errors are red, and debug messages are gray and include a
+`[DEBUG]` marker. `-debug` overrides `-silent`.
 
 ## Development
 

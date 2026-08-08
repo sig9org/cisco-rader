@@ -49,6 +49,28 @@ func TestParseMissingSections(t *testing.T) {
 	}
 }
 
+func TestBrowserUserAgentHidesHeadlessMarker(t *testing.T) {
+	got := browserUserAgent("", "Mozilla/5.0 HeadlessChrome/140.0.0.0 Safari/537.36")
+	want := "Mozilla/5.0 Chrome/140.0.0.0 Safari/537.36"
+	if got != want {
+		t.Fatalf("browserUserAgent = %q, want %q", got, want)
+	}
+}
+
+func TestBrowserUserAgentPrefersConfiguredValue(t *testing.T) {
+	got := browserUserAgent(" Custom Agent ", "Detected Agent")
+	if got != "Custom Agent" {
+		t.Fatalf("browserUserAgent = %q, want %q", got, "Custom Agent")
+	}
+}
+
+func TestBrowserUserAgentAccessor(t *testing.T) {
+	browser := &Browser{userAgent: "Custom Agent"}
+	if got := browser.UserAgent(); got != "Custom Agent" {
+		t.Fatalf("UserAgent = %q, want %q", got, "Custom Agent")
+	}
+}
+
 func TestParseFindsSectionsBelowWrapperNodes(t *testing.T) {
 	html := `<html><body>
 <ul class="p-tree-root-children">

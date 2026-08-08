@@ -21,7 +21,7 @@ func TestStatePath(t *testing.T) {
 
 func TestLoad(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "sites.yml")
-	data := []byte("sites:\n  - name: Test Product\n    url: https://software.cisco.com/example\n")
+	data := []byte("settings:\n  mention: ' user@example.com '\nsites:\n  - name: Test Product\n    url: https://software.cisco.com/example\n")
 	if err := os.WriteFile(path, data, 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -31,6 +31,9 @@ func TestLoad(t *testing.T) {
 	}
 	if len(cfg.Sites) != 1 || cfg.Sites[0].Name != "Test Product" {
 		t.Fatalf("unexpected config: %#v", cfg)
+	}
+	if cfg.Settings.Mention != "user@example.com" {
+		t.Fatalf("mention = %q", cfg.Settings.Mention)
 	}
 }
 

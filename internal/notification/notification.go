@@ -39,16 +39,71 @@ func LoadConfig(path, profile string) (notify.Config, error) {
 	return notify.ConfigFromEnv(), nil
 }
 
-// Message builds a portable Markdown notification for one changed site.
+// Message builds the default portable Markdown notification for one changed
+// site. Messages should normally be used so multiple changes can be grouped.
 func Message(change model.SiteDiff, now time.Time) notify.Message {
+	return notify.Message{
+		Subject: aggregateSubject(1),
+		Body:    messageBody(change),
+	}
+}
+
+// Messages builds either one grouped notification or one notification per
+// changed software page. Separate notification subjects contain only the name
+// configured for the site.
+func Messages(changes []model.SiteDiff, now time.Time, separate bool, mentions ...notify.Mention) []notify.Message {
+	if len(changes) == 0 {
+		return nil
+	}
+	if separate {
+		messages := make([]notify.Message, 0, len(changes))
+		for _, change := range changes {
+			messages = append(messages, notify.Message{
+				Subject:  change.Site.Name,
+				Body:     messageBody(change),
+				Mentions: cloneMentions(mentions),
+			})
+		}
+		return messages
+	}
+	if len(changes) == 1 {
+		message := Message(changes[0], now)
+		message.Mentions = cloneMentions(mentions)
+		return []notify.Message{message}
+	}
+
+	var body strings.Builder
+	for i, change := range changes {
+		if i != 0 {
+			body.WriteString("\n\n")
+		}
+		fmt.Fprintf(&body, "**%s**\n%s", change.Site.Name, messageBody(change))
+	}
+	return []notify.Message{{
+		Subject:  aggregateSubject(len(changes)),
+		Body:     body.String(),
+		Mentions: cloneMentions(mentions),
+	}}
+}
+
+func aggregateSubject(count int) string {
+	unit := "updates"
+	if count == 1 {
+		unit = "update"
+	}
+	return fmt.Sprintf("Cisco Software Update (%d %s)", count, unit)
+}
+
+func cloneMentions(mentions []notify.Mention) []notify.Mention {
+	return append([]notify.Mention(nil), mentions...)
+}
+
+func messageBody(change model.SiteDiff) string {
 	var body strings.Builder
 	writeSection(&body, "Suggested Release", change.Suggested)
 	writeSection(&body, "Latest Release", change.Latest)
 	fmt.Fprintf(&body, "- Download page:\n  - %s", change.Site.URL)
-	return notify.Message{
-		Subject: fmt.Sprintf("[%s]%s", now.Format("2006-01-02 15:04 MST"), change.Site.Name),
-		Body:    body.String(),
-	}
+	return body.String()
 }
 
 func writeSection(body *strings.Builder, name string, change model.SectionDiff) {

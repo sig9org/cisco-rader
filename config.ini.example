@@ -1,5 +1,5 @@
 [default]
-# Each section is a named notification profile. Select it with -profile or -p.
+# Each section is a named notification profile. Select it with -profile.
 PROXY=
 MSTEAMS_DST=
 SLACK_DST=

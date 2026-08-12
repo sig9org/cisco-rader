@@ -127,9 +127,9 @@ go test ./...
 go build ./...
 ```
 
-Version output uses `git describe --tags` and includes the commit hash. Release
-builds can set `internal/version.Version` and `internal/version.Commit` with Go
-linker flags. `-update` downloads the latest compatible release from
+Version output uses the nearest Git tag, such as `v0.0.2`, without displaying a
+commit hash. Release builds can set `internal/version.Version` with Go linker
+flags. `-update` downloads the latest compatible release from
 `sig9org/cisco-rader`.
 
 ## License

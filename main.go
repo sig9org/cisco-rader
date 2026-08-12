@@ -177,7 +177,7 @@ func monitor(ctx context.Context, opts options, logger *logx.Logger) int {
 			logger.Warnf("[%s] Release changes detected.", site.Name)
 			changes = append(changes, change)
 		} else {
-			logger.Infof("[%s] No changes.", site.Name)
+			logger.Debugf("[%s] No changes.", site.Name)
 		}
 		saved.Sites[site.URL] = snapshot
 	}

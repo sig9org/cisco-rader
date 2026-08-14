@@ -25,3 +25,12 @@ func TestComputeAddedAndRemoved(t *testing.T) {
 		t.Fatalf("unexpected diff: %#v", got)
 	}
 }
+
+func TestComputeTreatsDifferentProductStateAsFirstRun(t *testing.T) {
+	previous := model.Snapshot{ProductName: "ASAv", Suggested: []string{"9.22.2"}}
+	current := model.Snapshot{ProductName: "APIC", Suggested: []string{"6.1(5e)(M)"}}
+	got := Compute(model.Site{}, &previous, current)
+	if !got.FirstRun || got.Changed() {
+		t.Fatalf("unexpected mismatched-product diff: %#v", got)
+	}
+}

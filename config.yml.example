@@ -1,0 +1,28 @@
+settings:
+  # Notification and browser options.
+  debug: false
+  headless: false
+  mention: ""
+  separate: false
+  silent: false
+  threads: 1
+  timeout: 45s
+  user-agent: ""
+
+notifications:
+  # Former config.ini values: MSTEAMS_DST, WEBEX_TOKEN, WEBEX_DST,
+  # SLACK_DST, SLACK_TOKEN, SLACK_CHANNEL, and PROXY.
+  proxy: ""
+  teams:
+    destination: ""
+  webex:
+    token: ""
+    destination: ""
+  slack:
+    destination: ""
+    token: ""
+    channel: ""
+
+sites:
+  - name: Cisco Catalyst 9800 Wireless Controller
+    url: https://software.cisco.com/download/home/285968390/type/286278832/release/

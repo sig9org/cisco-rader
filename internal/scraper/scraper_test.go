@@ -71,6 +71,47 @@ func TestBrowserUserAgentAccessor(t *testing.T) {
 	}
 }
 
+func TestSameDownloadPage(t *testing.T) {
+	tests := []struct {
+		name      string
+		requested string
+		rendered  string
+		want      bool
+	}{
+		{
+			name:      "query and trailing slash may differ",
+			requested: "https://software.cisco.com/download/home/1/type/2/release/",
+			rendered:  "https://software.cisco.com/download/home/1/type/2/release?release=17.1",
+			want:      true,
+		},
+		{
+			name:      "selected release may be appended",
+			requested: "https://software.cisco.com/download/home/1/type/2/release/",
+			rendered:  "https://software.cisco.com/download/home/1/type/2/release/17.15.5",
+			want:      true,
+		},
+		{
+			name:      "different product is rejected",
+			requested: "https://software.cisco.com/download/home/1/type/2/release/",
+			rendered:  "https://software.cisco.com/download/home/9/type/2/release/",
+			want:      false,
+		},
+		{
+			name:      "different host is rejected",
+			requested: "https://software.cisco.com/download/home/1/type/2/release/",
+			rendered:  "https://example.com/download/home/1/type/2/release/",
+			want:      false,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := sameDownloadPage(test.requested, test.rendered); got != test.want {
+				t.Fatalf("sameDownloadPage() = %t, want %t", got, test.want)
+			}
+		})
+	}
+}
+
 func TestParseFindsSectionsBelowWrapperNodes(t *testing.T) {
 	html := `<html><body>
 <ul class="p-tree-root-children">

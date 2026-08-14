@@ -3,9 +3,7 @@ package notification
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -13,38 +11,12 @@ import (
 	"github.com/sig9org/cisco-rader/internal/model"
 )
 
-// LoadConfig reads a named profile from a config.ini file. An explicit path
-// must exist. With no explicit path, chatxgo's standard lookup is used and
-// environment variables provide a fallback when no file exists.
-func LoadConfig(path, profile string) (notify.Config, error) {
-	explicit := strings.TrimSpace(path) != ""
-	if !explicit {
-		var err error
-		path, err = notify.DefaultConfigPath()
-		if err != nil {
-			return notify.Config{}, err
-		}
-	}
-	if _, err := os.Stat(path); err == nil {
-		return notify.LoadConfigFile(path, profile)
-	} else if !errors.Is(err, os.ErrNotExist) {
-		return notify.Config{}, fmt.Errorf("inspect chat configuration: %w", err)
-	}
-	if explicit {
-		return notify.Config{}, fmt.Errorf("chat configuration file %q does not exist", path)
-	}
-	if strings.TrimSpace(profile) != "" && !strings.EqualFold(profile, notify.DefaultProfile) {
-		return notify.Config{}, fmt.Errorf("chat profile %q requires a config.ini file", profile)
-	}
-	return notify.ConfigFromEnv(), nil
-}
-
 // Message builds the default portable Markdown notification for one changed
 // site. Messages should normally be used so multiple changes can be grouped.
 func Message(change model.SiteDiff, now time.Time) notify.Message {
 	return notify.Message{
 		Subject: aggregateSubject(1),
-		Body:    messageBody(change),
+		Body:    messageBodyWithTitle(change),
 	}
 }
 
@@ -104,6 +76,10 @@ func messageBody(change model.SiteDiff) string {
 	writeSection(&body, "Latest Release", change.Latest)
 	fmt.Fprintf(&body, "- Download page:\n  - %s", change.Site.URL)
 	return body.String()
+}
+
+func messageBodyWithTitle(change model.SiteDiff) string {
+	return fmt.Sprintf("**%s**\n%s", change.Site.Name, messageBody(change))
 }
 
 func writeSection(body *strings.Builder, name string, change model.SectionDiff) {

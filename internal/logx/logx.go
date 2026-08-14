@@ -10,10 +10,19 @@ import (
 
 const (
 	red    = "\x1b[31m"
+	green  = "\x1b[32m"
 	orange = "\x1b[38;5;208m"
 	gray   = "\x1b[90m"
 	reset  = "\x1b[0m"
 )
+
+// Successf writes a green success message unless silent mode is enabled.
+func (l *Logger) Successf(format string, args ...any) {
+	if l.Silent && !l.Debug {
+		return
+	}
+	l.write(l.Out, green, timestamp()+" "+format, args...)
+}
 
 // Logger writes cisco-rader messages. Debug output overrides silent mode.
 type Logger struct {

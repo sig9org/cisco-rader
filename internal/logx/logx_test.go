@@ -35,3 +35,12 @@ func TestDebugOverridesSilent(t *testing.T) {
 		t.Fatalf("output = %q", out.String())
 	}
 }
+
+func TestSuccessUsesGreenOutput(t *testing.T) {
+	var out bytes.Buffer
+	logger := Logger{Out: &out}
+	logger.Successf("success")
+	if !strings.Contains(out.String(), green+"2026-") || !strings.Contains(out.String(), " success"+reset) {
+		t.Fatalf("success output = %q", out.String())
+	}
+}

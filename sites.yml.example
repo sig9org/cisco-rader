@@ -1,7 +1,0 @@
-settings:
-  mention: "foobar@example.com"
-sites:
-  - name: APIC (Application Policy Infrastructure Controller)
-    url: https://software.cisco.com/download/home/285968390/type/286278832/release/
-  - name: Cisco Modeling Labs
-    url: https://software.cisco.com/download/home/286193282/type/286326381/release/

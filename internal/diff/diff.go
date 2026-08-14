@@ -10,12 +10,19 @@ import (
 // Compute returns a stable, sorted release difference.
 func Compute(site model.Site, previous *model.Snapshot, current model.Snapshot) model.SiteDiff {
 	result := model.SiteDiff{Site: site, Snapshot: current, FirstRun: previous == nil}
-	if previous == nil {
+	if previous == nil || stateIdentityChanged(*previous, current) {
+		// A state generated for a different product must not be compared with
+		// the current release lists, otherwise every version appears changed.
+		result.FirstRun = true
 		return result
 	}
 	result.Suggested = section(previous.Suggested, current.Suggested)
 	result.Latest = section(previous.Latest, current.Latest)
 	return result
+}
+
+func stateIdentityChanged(previous, current model.Snapshot) bool {
+	return previous.ProductName != "" && current.ProductName != "" && previous.ProductName != current.ProductName
 }
 
 func section(oldVersions, newVersions []string) model.SectionDiff {

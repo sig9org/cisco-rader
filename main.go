@@ -119,16 +119,16 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	fs.SetOutput(stderr)
 	var configPath string
 	fs.StringVar(&configPath, "config", "", "configuration file (default: config.yml)")
+	fs.BoolVar(&opts.debug, "debug", false, "print timestamped debug tracing to stdout (overrides settings.debug)")
+	fs.BoolVar(&opts.dryRun, "dryrun", false, "show the planned operation without running it")
+	fs.BoolVar(&opts.showHelp, "h", false, "show this help message and exit")
+	fs.BoolVar(&opts.showHelp, "help", false, "show this help message and exit")
+	fs.BoolVar(&opts.init, "init", false, "recreate the state file from the current site values")
 	fs.BoolVar(&opts.noNotify, "no-notify", false, "do not send chat notifications")
 	fs.BoolVar(&opts.noSave, "no-save", false, "do not save the current state")
-	fs.BoolVar(&opts.init, "init", false, "recreate the state file from the current site values")
-	fs.BoolVar(&opts.dryRun, "dryrun", false, "show the planned operation without running it")
-	fs.BoolVar(&opts.debug, "debug", false, "print timestamped debug tracing to stdout (overrides settings.debug)")
 	fs.BoolVar(&opts.update, "update", false, "update cisco-rader to the latest release and exit")
 	fs.BoolVar(&opts.showVer, "v", false, "print version information and exit")
 	fs.BoolVar(&opts.showVer, "version", false, "print version information and exit")
-	fs.BoolVar(&opts.showHelp, "h", false, "show this help message and exit")
-	fs.BoolVar(&opts.showHelp, "help", false, "show this help message and exit")
 	fs.Usage = func() { printUsage(stdout, version.Current()) }
 	if err := fs.Parse(args); err != nil {
 		return 2
@@ -344,13 +344,13 @@ Release changes. Chrome or Chromium is displayed by default.
 
 Flags:
       -config string      configuration file (default: config.yml)
+      -debug              print timestamped debug tracing to stdout (overrides settings.debug)
+      -dryrun             show the planned operation without fetching, notifying, or saving
+  -h, -help               show this help message and exit
+      -init               recreate the state file from the current site values
       -no-notify          do not send chat notifications when releases change
       -no-save            do not write the derived *_state YAML file
-      -init               recreate the state file from the current site values
-      -dryrun             show the planned operation without fetching, notifying, or saving
-      -debug              print timestamped debug tracing to stdout (overrides settings.debug)
       -update             update cisco-rader to the latest release and exit
   -v, -version            print version information and exit
-  -h, -help               show this help message and exit
 `, info.String())
 }

@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"sync"
 	"testing"
@@ -98,6 +99,25 @@ func TestRunHelp(t *testing.T) {
 		if strings.Contains(stdout.String(), removed) {
 			t.Errorf("help still advertises removed CLI option %q", removed)
 		}
+	}
+}
+
+func TestRunHelpListsFlagsAlphabetically(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	if code := run(context.Background(), []string{"-help"}, &stdout, &stderr); code != 0 {
+		t.Fatalf("run = %d, stderr=%s", code, stderr.String())
+	}
+
+	var got []string
+	for _, line := range strings.Split(stdout.String(), "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "-") {
+			got = append(got, strings.Fields(line)[0])
+		}
+	}
+	want := []string{"-config", "-debug", "-dryrun", "-h,", "-init", "-no-notify", "-no-save", "-update", "-v,"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("help flags = %#v, want %#v", got, want)
 	}
 }
 
